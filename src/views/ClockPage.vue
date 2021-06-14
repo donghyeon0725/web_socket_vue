@@ -47,7 +47,6 @@ export default {
             }
         },
         async deleteClock(id) {
-            console.log('구독이 일어난 후, 채널에 이벤트가 일어나면 메세지를 보낼 핸들러')
             try {
                 await deleteClock(id);
                 let { data } = await getClock();

@@ -2,6 +2,19 @@ import Vue from 'vue'
 import SockJS from 'sockjs-client'
 import globalBus from '/src/event-bus'
 
+/**
+ * 웹 소켓 통신을 위해서
+ * SocketJS를 사용하고 있습니다.
+ *
+ * 기본적으로 웹 소켓을 사용하기 위해
+ *
+ * 1. 연결 (초기화)
+ * 2. 구독 (메세지를 받았을 때 동작을 수행할 클래스)
+ * 3. 구독 해제
+ * 위 세가지 동작을 제공합니다.
+ *
+ * init은 vue 어플리케이션이 생성 될 때 1번만 하면 되기 때문에 App.vue 의 created 훅에서 수행합니다.
+ * */
 class RealTimeClient {
     constructor () {
         this.serverUrl = null
@@ -18,6 +31,7 @@ class RealTimeClient {
             /* channel: [handler1, handler2] */
         }
     }
+    /* 초기화 => 토큰, 서버 url 발급 받은 정보를 기반으로 connect 수행 */
     init (serverUrl, token) {
         console.log(serverUrl);
         console.log(token);
@@ -30,6 +44,7 @@ class RealTimeClient {
         this.token = token
         this.connect()
     }
+    /* 상태를 비웁니다. & 소켓 close */
     logout () {
         console.log('[RealTimeClient] Logging out')
         this.subscribeQueue = {}
@@ -38,6 +53,7 @@ class RealTimeClient {
         this.loggedOut = true
         this.socket && this.socket.close()
     }
+    /* 연결 & 기본적인 4자기 이벤트 handling */
     connect () {
         console.log('[RealTimeClient] Connecting to ' + this.serverUrl)
         this.socket = new SockJS('http://localhost:8080' + this.serverUrl + '?token=' + this.token)
@@ -56,11 +72,14 @@ class RealTimeClient {
             this._onClosed(event)
         }
     }
+    /* 구독 */
     subscribe (channel, handler) {
+        /* 연결이 불안정하면, 연결 큐에 정보를 keep => 이후 다시 요청 */
         if (!this._isConnected()) {
             this._addToSubscribeQueue(channel, handler)
             return
         }
+        // 구독 액션을 보냅니다.
         const message = {
             action: 'subscribe',
             channel
@@ -69,6 +88,7 @@ class RealTimeClient {
         this.$bus.$on(this._channelEvent(channel), handler)
         console.log('[RealTimeClient] Subscribed to channel ' + channel)
     }
+    /* 구독 해제 */
     unsubscribe (channel, handler) {
         // Already logged out, no need to unsubscribe
         if (this.loggedOut) {
