@@ -26,3 +26,8 @@ npm run lint
 
 ### Customize configuration
 See [Configuration Reference](https://cli.vuejs.org/config/).
+
+
+### Endpoint
+http://localhost:3000/clock   
+http://localhost:3000/perfume
